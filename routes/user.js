@@ -41,6 +41,8 @@ const {
 } = require('../util/error-message');
 const regexList = require('../util/regex-list');
 const checkAuth = require('../middleware/check-auth');
+const checkAuthAdminChapter = require('../middleware/check-auth-admin-chapter');
+const checkOnlyAdmin = require('../middleware/check-only-admin');
 
 router.post('/register/v1_0', [
   body('email')
@@ -235,7 +237,25 @@ router.post('/submit_form/v1_0', checkAuth, [
     })
 ], userController.submitForm);
 
-router.get('/', userController.getAllUser);
+router.post('/resend_email/v1_0', checkAuth, [
+  body('email')
+    .trim()
+    .notEmpty().withMessage(email_required)
+    .isString().withMessage(email_format)
+    .custom((value, {req}) => {
+      try {
+        if (!value) throw(email_required);
+        const isValid = checkEmailFormat(value);
+        if (!isValid) throw(email_format);
+        return true;
+      } catch (error) {
+        throw(typeof(error) === 'string' ? error : general);
+      }
+    })
+], userController.resendEmail);
+
+// fitur yang hanya bisa diakses oleh admin
+router.get('/v1_0', checkAuth, checkOnlyAdmin, userController.getAllUserPending);
 router.put('/:id', userController.updateUser);
 router.delete('/:id', userController.deleteUser);
 

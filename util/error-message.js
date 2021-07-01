@@ -3,6 +3,7 @@ module.exports = {
   auth: 'Session anda telah habis, silahkan login kembali',
   message: 'message',
   validation: 'validation',
+  permission: 'Tidak memiliki hak akses untuk fitur ini',
   invalid_request: 'Permintaan tidak valid',
   email_required: 'Email wajib diisi',
   email_format: 'Email tidak valid',
@@ -45,6 +46,11 @@ module.exports = {
   snk_must_accepted: 'Syarat dan ketentuan wajib disetujui',
   emoney_required: 'E-money wajib dipilih',
   emoney_not_valid: 'E-money tidak valid',
+  kota_required: 'Nama kota wajib diisi',
+  kota_format: 'Nama kota tidak valid',
+  kota_exist: 'Nama kota sudah terdaftar, silahkan daftar kota lain',
+  create_kota_failed: 'Gagal membuat kota, silahkan coba beberapa saat lagi',
+  kota_not_exist: 'Kota tidak terdaftar',
   // stack
   stack_invalid_data_register: 'Data register tidak valid',
   stack_email_already_registered: 'Email sudah terdaftar',
@@ -53,4 +59,11 @@ module.exports = {
   stack_user_suspend: 'Akun ini telah disuspend',
   stack_password_wrong: 'Password yang anda masukkan salah',
   stack_invalid_data_submit_form: 'Data detail user tidak valid',
+  stack_resend_email: 'Email tidak valid',
+  stack_permission_must_admin: 'User login harus admin / ketua chapter',
+  stack_create_kota_chapter: 'Data kota tidak valid',
+  stack_kota_exist: 'Kota sudah terdaftar',
+  stack_create_kota_failed: 'Gagal membuat kota, error database',
+  stack_kota_not_exist: 'Kota yang dimasukkan tidak terdaftar',
+  stack_invalid_update_kota: 'Parameter kota id dibutuhkan'
 }

@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const lodash = require('lodash');
 const bcrypt = require('bcryptjs');
 const salt = bcrypt.genSaltSync(12);
 const jwt = require('jsonwebtoken');
@@ -24,9 +25,11 @@ const {
   user_suspend,
   stack_user_suspend,
   password_wrong,
-  stack_password_wrong
+  stack_password_wrong,
+  stack_resend_email
 } = require('../util/error-message');
 const sendEmail = require('../helper-function/send-email');
+const processQueryGetAllUserPending = require('../helper-function/process-query-get-all-user-pending');
 
 exports.registerUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
@@ -143,13 +146,50 @@ exports.submitForm = async (req, res, next) => {
   }
 }
 
-exports.getAllUser = async (req, res, next) => {
+exports.resendEmail = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
   try {
+    // 1) validasi data request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      let errorRequest = processErrorForm(errors.array());
+      throw(processError(validation, errorRequest, stack_resend_email));
+    }
 
+    // 2) kirim email aktivasi
+    // await sendEmail(req.body.email);
+    status = true;
   } catch (err) {
-
+    error = err.error;
+    stack = err.stack;
   } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}
 
+exports.getAllUserPending = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
+  try {
+    const queryData = processQueryGetAllUserPending(req);
+    const [users] = await User.getAllUser(queryData.query);
+    const [totalData] = await User.getTotalData(queryData.query);
+    
+    data = {
+      page: req.body.column && req.body.column.page ? req.body.column.page == 0 ? 1 : req.body.column.page : 1,
+      limit: queryData.limit,
+      max: totalData[0].total > 0 ? Math.ceil(totalData[0].total / queryData.limit) : 1,
+      total: totalData[0].total,
+      values: users.map(val => {
+        if (val.user_detail) val.user_detail = JSON.parse(val.user_detail);
+        return val;
+      })
+    }
+    status = true;
+  } catch (err) {
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
   }
 }
 
