@@ -1,8 +1,8 @@
 module.exports = (req, userId) => {
-  let query = `SELECT user_id, u.kota_id, user_email, user_nama, user_vin, user_plat, user_role, user_status, user_detail, user_created_at, user_activate FROM user AS u LEFT JOIN kota AS k ON u.kota_id = k.kota_id WHERE user_status = 3`;
+  let query = `SELECT user_id, u.kota_id, user_email, user_nama, user_vin, user_plat, user_role, user_status, user_detail, user_last_update, user_created_at, user_activate FROM user AS u LEFT JOIN kota AS k ON u.kota_id = k.kota_id WHERE user_status = 3`;
   let page = 0;
   let limit = 10;
-  let sort_attr = 'user_created_at';
+  let sort_attr = 'user_last_update';
   let sort = 'DESC';
   let search = '';
   let filter = {};
@@ -10,7 +10,7 @@ module.exports = (req, userId) => {
   if (req.body.column) {
     limit = req.body.column.limit ? +req.body.column.limit : limit;
     page = req.body.column.page ? ((+req.body.column.page -1) * limit) : (page * limit);
-    if (['user_email', 'user_nama'].includes(sort_attr)) sort_attr = req.body.column.sort_attr ? req.body.column.sort_attr : sort_attr;
+    if (['user_email', 'user_nama', 'user_last_update', 'user_created_at'].includes(sort_attr)) sort_attr = req.body.column.sort_attr ? req.body.column.sort_attr : sort_attr;
     sort = req.body.column.sort ? req.body.column.sort == 1 ? 'ASC' : 'DESC' : sort;
     search = req.body.column.search ? req.body.column.search : search;
     filter = req.body.column.filter ? req.body.column.filter : filter;   

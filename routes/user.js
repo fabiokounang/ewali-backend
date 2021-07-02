@@ -37,7 +37,10 @@ const {
   informasi_wali_format,
   emoney_required,
   emoney_not_valid,
-  nomor_id_format
+  nomor_id_format,
+  status_form_required,
+  status_form_invalid,
+  note_required
 } = require('../util/error-message');
 const regexList = require('../util/regex-list');
 const checkAuth = require('../middleware/check-auth');
@@ -132,12 +135,10 @@ router.post('/submit_form/v1_0', checkAuth, [
     }),
   body('nama_lengkap')
     .trim()
-    .notEmpty().withMessage(nama_lengkap_required)
-    .isAlpha().withMessage(nama_lengkap_format),
+    .notEmpty().withMessage(nama_lengkap_required),
   body('nama_panggilan')
     .trim()
-    .notEmpty().withMessage(nama_panggilan_required)
-    .isAlpha().withMessage(nama_panggilan_format),
+    .notEmpty().withMessage(nama_panggilan_required),
   body('tanggal_lahir')
     .trim()
     .notEmpty().withMessage(tanggal_lahir_required)
@@ -256,6 +257,31 @@ router.post('/resend_email/v1_0', checkAuth, [
 
 // fitur yang hanya bisa diakses oleh admin
 router.get('/v1_0', checkAuth, checkOnlyAdmin, userController.getAllUserPending);
+router.put('/role/v1_0/:id', checkAuth, checkOnlyAdmin, userController.updateRoleUser);
+router.put('/review_form/v1_0/:id', checkAuth, checkOnlyAdmin, [
+  body('status_form')
+    .notEmpty().withMessage(status_form_required)
+    .custom((value, {req}) => {
+      try {
+        if (!value) throw(status_form_required);
+        if (![1, 2].includes(value)) throw(status_form_invalid);
+        return true;
+      } catch (error) {
+        throw(typeof(error) === 'string' ? error : general);
+      }
+    }),
+  body('note')
+    .trim()
+    .custom((value, {req}) => {
+      try {
+        console.log(value.length)
+        if (!value && req.body.status_form == 2) throw(note_required);
+        return true;
+      } catch (error) {
+        throw(typeof(error) === 'string' ? error : general);
+      }
+    })
+], userController.reviewApproveRejectForm);
 router.put('/:id', userController.updateUser);
 router.delete('/:id', userController.deleteUser);
 
