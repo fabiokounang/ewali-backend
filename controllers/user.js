@@ -45,10 +45,13 @@ const {
   kota_required,
   kota_not_exist,
   stack_kota_not_exist,
-  stack_kota_required
+  stack_kota_required,
+  stack_user_still_pending,
+  user_still_pending
 } = require('../util/error-message');
 const sendEmail = require('../helper-function/send-email');
 const processQueryGetAllUserPending = require('../helper-function/process-query-get-all-user-pending');
+const processQueryGetAllUserActive = require('../helper-function/process-query-get-all-user-active');
 
 exports.registerUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
@@ -220,6 +223,47 @@ exports.getAllUserPending = async (req, res, next) => {
   }
 }
 
+exports.getAllUserNotPending = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
+  try {
+    const queryData = processQueryGetAllUserActive(req);
+    const [users] = await User.getAllUser(queryData.query);
+    const [totalData] = await User.getTotalData(queryData.query);
+    
+    data = {
+      page: req.body.column && req.body.column.page ? req.body.column.page == 0 ? 1 : req.body.column.page : 1,
+      limit: queryData.limit,
+      max: totalData[0].total > 0 ? Math.ceil(totalData[0].total / queryData.limit) : 1,
+      total: totalData[0].total,
+      values: users.map(val => {
+        if (val.user_detail) {
+          val.user_detail = JSON.parse(val.user_detail);
+          if (req.userData.user_role == 2) {
+            Object.keys(val.user_detail).forEach((key) => {
+              if (key != 'nomor_telepon_current' && key != 'nomor_telepon_emergency') delete val.user_detail[key];
+            });
+          }
+        }
+        if (req.userData.user_role == 2) {
+          delete val.kota_id;
+          delete val.user_last_update;
+          delete val.user_created_at;
+          delete val.user_vin;
+          delete val.user_role;
+          delete val.user_status;
+        }
+        return val;
+      })
+    }
+    status = true;
+  } catch (err) {
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}
+
 exports.updateRoleUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
   try {
@@ -228,6 +272,7 @@ exports.updateRoleUser = async (req, res, next) => {
     if (req.userData.user_id == req.params.id) throw(processError(message, invalid_request, stack_forbidden));
     const [user] = await User.getUserByKey('user_id', req.params.id);
     if (user.length <= 0) throw(processError(message, user_not_found, stack_user_not_found));
+    if (user[0].user_status == 3) throw(processError(message, user_still_pending, stack_user_still_pending));
     if (user[0].user_role == 1 && req.body.user_role <= 1) throw(processError(message, invalid_request, stack_admin_cannot_upgrade));
     const [resultUpdate] = await User.updateRole(req.params.id, req.body.user_role);
     if (resultUpdate.affectedRows <= 0) throw(processError(message, update_role_failed, stack_update_role_failed));
@@ -279,21 +324,25 @@ exports.reviewApproveRejectForm = async (req, res, next) => {
 }
 
 exports.updateUser = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
   try {
-
+    status = true;
   } catch (err) {
-
+    error = err.error;
+    stack = err.stack;
   } finally {
-
+    sendResponse(res, status, data, error, stack);
   }
 }
 
 exports.deleteUser = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
   try {
-
+    status = true;
   } catch (err) {
-
+    error = err.error;
+    stack = err.stack;
   } finally {
-
+    sendResponse(res, status, data, error, stack);
   }
 }

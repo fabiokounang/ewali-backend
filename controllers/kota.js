@@ -74,7 +74,6 @@ exports.updateKotaChapter = async (req, res, next) => {
     if (kota.length <= 0) throw(processError(message, kota_not_exist, stack_kota_not_exist));
 
     const [resultUpdateKota] = await Kota.updateKota(req.body.kota_nama, kota[0].kota_id);
-    console.log(resultUpdateKota);
     if (resultUpdateKota.affectedRows != 1) throw(processError(message, create_kota_failed, stack_create_kota_failed));
     status = true;
   } catch (err) {
@@ -96,7 +95,6 @@ exports.deleteKotaChapter = async (req, res, next) => {
     if (kota.length <= 0) throw(processError(message, kota_not_exist, stack_kota_not_exist));
 
     const [resultDelete] = await Kota.deleteKota(kota[0].kota_id);
-    console.log(resultDelete);
     if (resultDelete.affectedRows != 1) throw(processError(message, create_kota_failed, stack_create_kota_failed));
     status = true;
   } catch (err) {

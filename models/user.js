@@ -3,7 +3,7 @@ const database = require("../util/database")
 
 module.exports = class User {
   static getUserByKey (key, value) {
-    return database.execute(`SELECT user_id, user_email, user_nama, user_password, user_role, user_status, user_detail FROM user WHERE ${key} = ?`, [value]);
+    return database.execute(`SELECT user_id, kota_id, user_email, user_nama, user_password, user_role, user_status, user_detail FROM user WHERE ${key} = ?`, [value]);
   }
 
   static getAllUser (query) {

@@ -55,6 +55,7 @@ module.exports = {
   status_form_required: 'Status terima / tolak form wajib dipilih',
   update_status_failed: 'Update status gagal, silahkan coba beberapa saat lagi',
   user_not_submit_form_yet: 'User ini belum submit form',
+  user_still_pending: 'User upgrade / downgrade hanya user dengan status aktif / suspend',
   // stack
   stack_invalid_data_register: 'Data register tidak valid',
   stack_email_already_registered: 'Email sudah terdaftar',
@@ -81,5 +82,6 @@ module.exports = {
   stack_invalid_data_approve_reject_form: 'Data approve / reject form tidak valid',
   stack_update_status_failed: 'Update status user gagal, error database',
   stack_user_not_submit_form_yet: 'User ini belum submit form',
-  stack_kota_required: 'Kota untuk user wajib dipilih sebelum diapprove'
+  stack_kota_required: 'Kota untuk user wajib dipilih sebelum diapprove',
+  stack_user_still_pending: 'Jika ingin mengupgrade / downgrade user, statusnya harus != 3 (pending)'
 }

@@ -256,7 +256,8 @@ router.post('/resend_email/v1_0', checkAuth, [
 ], userController.resendEmail);
 
 // fitur yang hanya bisa diakses oleh admin
-router.get('/v1_0', checkAuth, checkOnlyAdmin, userController.getAllUserPending);
+router.get('/pending/v1_0', checkAuth, checkOnlyAdmin, userController.getAllUserPending);
+router.get('/v1_0', checkAuth, checkOnlyAdmin, userController.getAllUserNotPending);
 router.put('/role/v1_0/:id', checkAuth, checkOnlyAdmin, userController.updateRoleUser);
 router.put('/review_form/v1_0/:id', checkAuth, checkOnlyAdmin, [
   body('status_form')
@@ -274,7 +275,6 @@ router.put('/review_form/v1_0/:id', checkAuth, checkOnlyAdmin, [
     .trim()
     .custom((value, {req}) => {
       try {
-        console.log(value.length)
         if (!value && req.body.status_form == 2) throw(note_required);
         return true;
       } catch (error) {
