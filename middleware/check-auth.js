@@ -15,9 +15,8 @@ function helperResponse(error) {
 module.exports = async (req, res, next) => {
   let { status, data, error, stack } = returnData();
   try {
-    if (!req.headers.authorization) return helperResponse(error);
-    if (!req.headers.authorization.startsWith('Bearer ')) return helperResponse(error); 
-    const token = req.headers.authorization.split(' ')[1]; // Bearer token
+    if (!req.cookies.tokenuser) return helperResponse(error);
+    const token = req.cookies.tokenuser; // token
     if (!token) return helperResponse(error);
     const decoded = await promisify(jwt.verify)(token, process.env.SECRET_KEY);
     const [userData] = await User.getUserByKey('user_id', decoded.user_id);

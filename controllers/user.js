@@ -229,7 +229,7 @@ exports.getAllUserNotPending = async (req, res, next) => {
     const queryData = processQueryGetAllUserActive(req);
     const [users] = await User.getAllUser(queryData.query);
     const [totalData] = await User.getTotalData(queryData.query);
-    
+    console.log(users)
     data = {
       page: req.body.column && req.body.column.page ? req.body.column.page == 0 ? 1 : req.body.column.page : 1,
       limit: queryData.limit,
