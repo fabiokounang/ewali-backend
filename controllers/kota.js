@@ -1,6 +1,7 @@
 const { validationResult } = require("express-validator");
 
 const Kota = require('../models/kota');
+const User = require('../models/user');
 
 const processError = require("../helper-function/process-error");
 const processErrorForm = require("../helper-function/process-error-form");
@@ -9,6 +10,7 @@ const sendResponse = require("../helper-function/send-response");
 const { validation, stack_create_kota_chapter, message, kota_exist, stack_kota_exist, invalid_request, kota_not_exist, stack_kota_not_exist } = require("../util/error-message");
 const returnData = require("../util/return-data");
 const processQueryGetAllKota = require("../helper-function/process-query-get-all-kota");
+const getConnection = require("../helper-function/get-connection");
 
 exports.createKotaChapter = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
@@ -43,7 +45,7 @@ exports.getAllKotaChapter = async (req, res, next) => {
     const [kotas] = await Kota.getAllKota(queryData.query);
     const [totalData] = await Kota.getTotalData(queryData.query);
     data = {
-      page: req.body.column && req.body.column.page ? req.body.column.page == 0 ? 1 : req.body.column.page : 1,
+      page: req.query.page ? req.query.page == 0 ? 1 : req.query.page : 1,
       limit: queryData.limit,
       max: totalData[0].total > 0 ? Math.ceil(totalData[0].total / queryData.limit) : 1,
       total: totalData[0].total,
@@ -86,7 +88,10 @@ exports.updateKotaChapter = async (req, res, next) => {
 
 exports.deleteKotaChapter = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
+  const conn = await getConnection();
   try {
+    await conn.beginTransaction();
+
     // 1) validasi data
     if (!req.params.id) throw(processError(validation, invalid_request, stack_invalid_update_kota));
 
@@ -94,13 +99,21 @@ exports.deleteKotaChapter = async (req, res, next) => {
     const [kota] = await Kota.getKotaById(req.params.id);
     if (kota.length <= 0) throw(processError(message, kota_not_exist, stack_kota_not_exist));
 
+    const [users] = await User.getUserByKey('kota_id', kota[0].kota_id);
+    if (users.length > 0) {
+      let ids = users.map(val => val.user_id);
+      await User.removeKotaAndUpdateStatusPendingUser(ids.join(','));
+    }
     const [resultDelete] = await Kota.deleteKota(kota[0].kota_id);
     if (resultDelete.affectedRows != 1) throw(processError(message, create_kota_failed, stack_create_kota_failed));
+    await conn.commit();
     status = true;
   } catch (err) {
     error = err.error;
     stack = err.stack;
+    await conn.rollback();
   } finally {
+    await conn.release();
     sendResponse(res, status, data, error, stack);
   }
 }

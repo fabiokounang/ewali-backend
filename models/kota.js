@@ -1,6 +1,10 @@
 const database = require("../util/database")
 
 module.exports = class Kota {
+  static getKotaByNama (kotaNama) {
+    return database.execute(`SELECT kota_id, kota_nama, kota_created_at FROM kota WHERE kota_nama = ?`, [kotaNama]);
+  }
+
   static getKotaById (kotaId) {
     return database.execute(`SELECT kota_id, kota_nama, kota_created_at FROM kota WHERE kota_id = ?`, [kotaId]);
   } 

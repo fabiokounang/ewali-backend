@@ -205,7 +205,7 @@ exports.getAllUserPending = async (req, res, next) => {
     const [totalData] = await User.getTotalData(queryData.query);
     
     data = {
-      page: req.body.column && req.body.column.page ? req.body.column.page == 0 ? 1 : req.body.column.page : 1,
+      page: req.query.page ? req.query.page == 0 ? 1 : req.query.page : 1,
       limit: queryData.limit,
       max: totalData[0].total > 0 ? Math.ceil(totalData[0].total / queryData.limit) : 1,
       total: totalData[0].total,
@@ -231,7 +231,7 @@ exports.getAllUserNotPending = async (req, res, next) => {
     const [totalData] = await User.getTotalData(queryData.query);
     console.log(users)
     data = {
-      page: req.body.column && req.body.column.page ? req.body.column.page == 0 ? 1 : req.body.column.page : 1,
+      page: req.query.page ? req.query.page == 0 ? 1 : req.query.page : 1,
       limit: queryData.limit,
       max: totalData[0].total > 0 ? Math.ceil(totalData[0].total / queryData.limit) : 1,
       total: totalData[0].total,

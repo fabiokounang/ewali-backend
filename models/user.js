@@ -38,4 +38,7 @@ module.exports = class User {
   static updateDataUser (userId, userStatus, kota) {
     return database.execute(`UPDATE user SET user_status = ?, kota_id = ? WHERE user_id = ?`, [userStatus, kota, userId]);
   }
+  static removeKotaAndUpdateStatusPendingUser (usersId) {
+    return database.execute(`UPDATE user SET kota_id = ?, user_status = 3 WHERE user_id IN (${usersId})`, [null]);
+  }
 }

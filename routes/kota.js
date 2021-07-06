@@ -24,8 +24,8 @@ router.put('/v1_0/:id', [
     .notEmpty().withMessage(kota_required)
     .isString().withMessage(kota_format)
     .toLowerCase()
-], checkOnlyAdmin, kotaController.updateKotaChapter);
+], checkAuth, checkOnlyAdmin, kotaController.updateKotaChapter);
 
-router.delete('/v1_0/:id', checkOnlyAdmin, kotaController.deleteKotaChapter);
+router.delete('/v1_0/:id', checkAuth, checkOnlyAdmin, kotaController.deleteKotaChapter);
 
 module.exports = router;
