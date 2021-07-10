@@ -6,6 +6,10 @@ module.exports = class User {
     return database.execute(`SELECT user_id, kota_id, user_email, user_nama, user_password, user_role, user_status, user_detail FROM user WHERE ${key} = ?`, [value]);
   }
 
+  static getUserByNamaVinPlat (data) {
+    return database.execute(`SELECT user_id, kota_id, user_email, user_nama, user_password, user_role, user_status, user_detail FROM user WHERE user_nama = ? OR user_vin = ? OR user_plat = ?`, [data.nama_lengkap, data.nomor_vin, data.nomor_polisi]);
+  }
+
   static getAllUser (query) {
     return database.execute(query);
   }
@@ -24,21 +28,23 @@ module.exports = class User {
   }
 
   static insertOrUpdateDetailUser (userId, data) {
-    return database.query(`UPDATE user SET user_detail = ? WHERE user_id = ?`, [JSON.stringify(data), userId]);
+    return database.query(`UPDATE user SET user_detail = ?, user_last_update = ? WHERE user_id = ?`, [JSON.stringify(data), processDate(), userId]);
   }
 
   static updateRole (userId, userRole) {
     return database.execute(`UPDATE user SET user_role = ? WHERE user_id = ?`, [userRole, userId]);
   }
 
-  static updateDataUserForm (userId, data) {
-    return database.execute(`UPDATE user SET user_nama = ?, user_vin = ?, user_plat = ?, user_last_update = ? WHERE user_id = ?`, [data.user_nama, data.user_vin, data.user_plat, processDate(), userId]);
+  static updateDataUserForm (userId, data, kotaId) {
+    console.log(userId, data, kotaId);
+    return database.execute(`UPDATE user SET user_nama = ?, user_vin = ?, user_plat = ?, user_status = ?, kota_id = ? WHERE user_id = ?`, [data.user_nama, data.user_vin, data.user_plat, '1', kotaId, userId]);
   }
 
-  static updateDataUser (userId, userStatus, kota) {
-    return database.execute(`UPDATE user SET user_status = ?, kota_id = ? WHERE user_id = ?`, [userStatus, kota, userId]);
-  }
   static removeKotaAndUpdateStatusPendingUser (usersId) {
     return database.execute(`UPDATE user SET kota_id = ?, user_status = 3 WHERE user_id IN (${usersId})`, [null]);
+  }
+
+  static updateStatusUser (userId, status) {
+    return database.execute(`UPDATE user SET user_status = ? WHERE user_id = ? AND user_status = 3`, [status, userId]);
   }
 }

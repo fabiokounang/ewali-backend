@@ -47,7 +47,12 @@ const {
   stack_kota_not_exist,
   stack_kota_required,
   stack_user_still_pending,
-  user_still_pending
+  user_still_pending,
+  stack_forbidden_submit,
+  user_not_valid,
+  stack_user_not_valid,
+  unique_user_data,
+  stack_unique_user_data
 } = require('../util/error-message');
 const sendEmail = require('../helper-function/send-email');
 const processQueryGetAllUserPending = require('../helper-function/process-query-get-all-user-pending');
@@ -136,10 +141,21 @@ exports.submitForm = async (req, res, next) => {
       throw(processError(validation, errorRequest, stack_invalid_data_submit_form));
     }
 
-    // 2) proses data masing2 per key
-    const objDetail = {   
+    // 2) cek sudah pernah submit ? 
+       // jika iya dan belum direview, tolak, 
+       // jika ditolak oleh admin boleh submit lagi
+    if (req.userData.user_detail && !req.userData.user_detail.note) throw(processError(message, invalid_request, stack_forbidden_submit));
+
+    // 3) cek user_vin, user_nama, user_plat sudah ada / tidak (wajib unique)
+    const [user] = await User.getUserByNamaVinPlat(req.body); 
+    if (user.length > 0) throw(processError(message, unique_user_data, stack_unique_user_data));
+
+    // 4) proses data masing2 per key
+    const objDetail = {
+      user_nama: req.body.nama_lengkap,
+      user_vin: req.body.nomor_vin,
+      user_plat: req.body.nomor_polisi,
       nomor_id:  req.body.nomor_id,
-      nama_lengkap:  req.body.nama_lengkap,
       nama_panggilan:  req.body.nama_panggilan,
       tanggal_lahir:  req.body.tanggal_lahir,
       alamat_ktp:  req.body.alamat_ktp,
@@ -157,16 +173,8 @@ exports.submitForm = async (req, res, next) => {
       emoney:  req.body.emoney
     }
 
-    // 3) insert ke user_detail
+    // 5) insert ke user_detail
     await User.insertOrUpdateDetailUser(req.userData.user_id, objDetail);
-
-    // 4) update data user & last update
-    const userData = {
-      user_nama: req.body.nama_lengkap,
-      user_vin: req.body.nomor_vin,
-      user_plat: req.body.nomor_polisi
-    }
-    await User.updateDataUserForm(req.userData.user_id, userData);
     status = true;
   } catch (err) {
     error = err.error;
@@ -203,7 +211,7 @@ exports.getAllUserPending = async (req, res, next) => {
     const queryData = processQueryGetAllUserPending(req);
     const [users] = await User.getAllUser(queryData.query);
     const [totalData] = await User.getTotalData(queryData.query);
-    
+    const [kota] = await Kota.getAllKota(`SELECT kota_id, kota_nama FROM kota`);
     data = {
       page: req.query.page ? req.query.page == 0 ? 1 : req.query.page : 1,
       limit: queryData.limit,
@@ -212,7 +220,8 @@ exports.getAllUserPending = async (req, res, next) => {
       values: users.map(val => {
         if (val.user_detail) val.user_detail = JSON.parse(val.user_detail);
         return val;
-      })
+      }),
+      kota: kota
     }
     status = true;
   } catch (err) {
@@ -229,7 +238,7 @@ exports.getAllUserNotPending = async (req, res, next) => {
     const queryData = processQueryGetAllUserActive(req);
     const [users] = await User.getAllUser(queryData.query);
     const [totalData] = await User.getTotalData(queryData.query);
-    console.log(users)
+
     data = {
       page: req.query.page ? req.query.page == 0 ? 1 : req.query.page : 1,
       limit: queryData.limit,
@@ -298,21 +307,49 @@ exports.reviewApproveRejectForm = async (req, res, next) => {
 
     const [user] = await User.getUserByKey('user_id', req.params.id);
     if (user.length <= 0) throw(processError(message, user_not_found, stack_user_not_found));
+    if (user[0].user_role != 3) throw(processError(message, user_not_valid, stack_user_not_valid));
     if (!user[0].user_detail) throw(processError(message, user_not_submit_form_yet, stack_user_not_submit_form_yet));
     user[0].user_detail = JSON.parse(user[0].user_detail);
     
     if (req.body.status_form == 1) {
       if (!req.body.kota) throw(processError(message, kota_required, stack_kota_required));
+      console.log(req.body)
+      console.log(user[0])
       const [kota] = await Kota.getKotaById(req.body.kota);
       if (kota.length <= 0) throw(processError(message, kota_not_exist, stack_kota_not_exist));
-      if (user[0].user_detail && user[0].user_detail.note) delete user[0].user_detail.note;
-      const [resultUpdate] = await User.updateDataUser(req.params.id, req.body.kota, 1);
+      // if (user[0].user_detail && user[0].user_detail.note) delete user[0].user_detail.note;
+      // update data user & last update
+      const userData = {
+        user_nama: user[0].user_detail.user_nama,
+        user_vin: user[0].user_detail.user_vin,
+        user_plat: user[0].user_detail.user_plat
+      }
+      const resultUpdate = await User.updateDataUserForm(req.params.id, userData, req.body.kota);
       if (resultUpdate.affectedRows <= 0) throw(processError(message, update_status_failed, stack_update_status_failed));
     } else {
       user[0].user_detail.note = req.body.note;
       // send email
       const [resultUpdate] = await User.insertOrUpdateDetailUser(req.params.id, user[0].user_detail);
       if (resultUpdate.affectedRows <= 0) throw(processError(message, update_status_failed, stack_update_status_failed));
+    }
+    status = true;
+  } catch (err) {
+    console.log(err);
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}
+
+exports.updateDataUser = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
+  try {
+    if (!req.params.id) throw(processError(message, invalid_request, stack_invalid_parameter));
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      let errorRequest = processErrorForm(errors.array());
+      throw(processError(validation, errorRequest, stack_resend_email));
     }
     status = true;
   } catch (err) {
@@ -323,9 +360,31 @@ exports.reviewApproveRejectForm = async (req, res, next) => {
   }
 }
 
-exports.updateUser = async (req, res, next) => {
+exports.blockUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
   try {
+    if (!req.params.id) throw(processError(message, invalid_request, stack_invalid_parameter));
+    if (req.userData.user_id == req.params.id) throw(processError(message, invalid_request, stack_forbidden));
+    const [resultUpdate] = await User.updateStatusUser(req.params.id, '4'); // block user yang status dari aktif saja
+    console.log(resultUpdate.affectedRows);
+    status = true;
+  } catch (err) {
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}
+
+exports.getLogin = async (req, res, next) => {
+  let { status, data, error, stack } = returnData();
+  try {  
+    data = {
+      user_id: req.userData.user_id,
+      user_email: req.userData.user_email,
+      user_role: req.userData.user_role,
+      user_nama: req.userData.user_nama
+    }
     status = true;
   } catch (err) {
     error = err.error;

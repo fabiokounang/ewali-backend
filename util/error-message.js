@@ -39,6 +39,8 @@ module.exports = {
   nomor_telepon_format: 'Nomor telepon tidak valid (wajib angka)',
   golongan_darah_required: 'Golongan darah wajib dipilih',
   golongan_darah_enum: 'Golongan darah tidak valid',
+  nomor_vin_required: 'Nomor vin wajib diisi',
+  nomor_polisi_required: 'Nomor polisi wajib diisi',
   informasi_wali_required: 'Informasi ewali wajib dipilih salah satu',
   informasi_wali_format: 'Informasi tidak valid',
   snk_required: "Syarat dan ketentuan wajib disetujui",
@@ -56,6 +58,8 @@ module.exports = {
   update_status_failed: 'Update status gagal, silahkan coba beberapa saat lagi',
   user_not_submit_form_yet: 'User ini belum submit form',
   user_still_pending: 'User upgrade / downgrade hanya user dengan status aktif / suspend',
+  user_not_valid: 'User tidak valid',
+  unique_user_data: 'User nama / nomor vin / nomor polisi sudah terdaftar',
   // stack
   stack_invalid_data_register: 'Data register tidak valid',
   stack_email_already_registered: 'Email sudah terdaftar',
@@ -83,5 +87,9 @@ module.exports = {
   stack_update_status_failed: 'Update status user gagal, error database',
   stack_user_not_submit_form_yet: 'User ini belum submit form',
   stack_kota_required: 'Kota untuk user wajib dipilih sebelum diapprove',
-  stack_user_still_pending: 'Jika ingin mengupgrade / downgrade user, statusnya harus != 3 (pending)'
+  stack_user_still_pending: 'Jika ingin mengupgrade / downgrade user, statusnya harus != 3 (pending)',
+  stack_permission_must_user: 'User login harus user',
+  stack_forbidden_submit: 'User tidak boleh submit lagi sebelum direview dengan admin / setelah diapprove oleh admin',
+  stack_user_not_valid: 'User yang akan direview form, harus user role 3 (user)',
+  stack_unique_user_data: 'User nama / nomor vin / nomor polisi sudah terdaftar',
 }

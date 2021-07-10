@@ -20,8 +20,6 @@ const {
   nomor_08,
   nomor_telepon_format,
   nama_lengkap_required,
-  nama_lengkap_format,
-  nama_panggilan_format,
   nama_panggilan_required,
   tanggal_lahir_date_format,
   tanggal_lahir_required,
@@ -40,12 +38,15 @@ const {
   nomor_id_format,
   status_form_required,
   status_form_invalid,
-  note_required
+  note_required,
+  nomor_vin_required,
+  nomor_polisi_required
 } = require('../util/error-message');
 const regexList = require('../util/regex-list');
 const checkAuth = require('../middleware/check-auth');
 const checkAuthAdminChapter = require('../middleware/check-auth-admin-chapter');
 const checkOnlyAdmin = require('../middleware/check-only-admin');
+const checkOnlyUser = require('../middleware/check-only-user');
 
 router.post('/register/v1_0', [
   body('email')
@@ -121,7 +122,7 @@ router.post('/login/v1_0', [
     }),
 ], userController.loginUser);
 
-router.post('/submit_form/v1_0', checkAuth, [
+router.post('/submit_form/v1_0', checkAuth, checkOnlyUser, [
   body('nomor_id')
     .optional({ checkFalsy: true })
     .trim()
@@ -196,6 +197,13 @@ router.post('/submit_form/v1_0', checkAuth, [
         throw(typeof(error) === 'string' ? error : general);
       }
     }),
+  body('nomor_vin')
+    .trim()
+    .notEmpty().withMessage(nomor_vin_required),
+  body('nomor_polisi')    
+    .trim()
+    .notEmpty().withMessage(nomor_polisi_required)
+    .toUpperCase(),
   body('informasi_wali') 
   .notEmpty().withMessage(informasi_wali_required)
   .isArray().withMessage(informasi_wali_format)
@@ -282,7 +290,9 @@ router.put('/review_form/v1_0/:id', checkAuth, checkOnlyAdmin, [
       }
     })
 ], userController.reviewApproveRejectForm);
-router.put('/:id', userController.updateUser);
+router.put('/:id', checkAuth, checkOnlyAdmin, userController.updateDataUser);
 router.delete('/:id', userController.deleteUser);
+router.put('/block/v1_0/:id', checkAuth, checkOnlyAdmin, userController.blockUser);
+router.get('/get_login/v1_0', checkAuth, userController.getLogin);
 
 module.exports = router;

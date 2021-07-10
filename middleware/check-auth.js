@@ -21,7 +21,8 @@ module.exports = async (req, res, next) => {
     const decoded = await promisify(jwt.verify)(token, process.env.SECRET_KEY);
     const [userData] = await User.getUserByKey('user_id', decoded.user_id);
     if (userData.length <= 0) return helperResponse(error);
-    if (userData.status == 2) return helperResponse(error);
+    if (userData.status == 2 || userData.status == 4) return helperResponse(error);
+    if (userData[0].user_detail) userData[0].user_detail = JSON.parse(userData[0].user_detail);
     req.userData = userData[0];
     status = true;
   } catch (err) {

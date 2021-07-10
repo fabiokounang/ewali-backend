@@ -1,5 +1,5 @@
 module.exports = (req) => {
-  let query = `SELECT user_id, u.kota_id, k.kota_nama, user_email, user_nama, user_vin, user_plat, user_role, user_status, user_detail, user_last_update, user_created_at, user_activate FROM user AS u LEFT JOIN kota AS k ON u.kota_id = k.kota_id WHERE user_status != 3`;
+  let query = `SELECT user_id, u.kota_id, k.kota_nama, user_email, user_nama, user_vin, user_plat, user_role, user_status, user_detail, user_last_update, user_created_at, user_activate FROM user AS u LEFT JOIN kota AS k ON u.kota_id = k.kota_id WHERE user_status NOT IN (3,4)`;
   if (req.userData.user_role == 2) query += ` AND kota_id = ${req.userData.kota_id}`;
   let page = 0;
   let limit = 10;
