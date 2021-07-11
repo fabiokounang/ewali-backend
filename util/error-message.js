@@ -38,7 +38,7 @@ module.exports = {
   nomor_telepon_min_max: 'Nomor telepon minimal 10 digit dan maksimal 14 digit',
   nomor_telepon_format: 'Nomor telepon tidak valid (wajib angka)',
   golongan_darah_required: 'Golongan darah wajib dipilih',
-  golongan_darah_enum: 'Golongan darah tidak valid',
+  golongan_darah_enum: 'Golongan darah wajib diantara (A / B / AB / O)',
   nomor_vin_required: 'Nomor vin wajib diisi',
   nomor_polisi_required: 'Nomor polisi wajib diisi',
   informasi_wali_required: 'Informasi ewali wajib dipilih salah satu',
@@ -62,6 +62,7 @@ module.exports = {
   unique_user_data: 'User nama / nomor vin / nomor polisi sudah terdaftar',
   // stack
   stack_invalid_data_register: 'Data register tidak valid',
+  stack_invalid_data_update: 'Data update tidak valid',
   stack_email_already_registered: 'Email sudah terdaftar',
   stack_register_failed: 'Register gagal, database error',
   stack_user_not_found: 'User tidak terdaftar',

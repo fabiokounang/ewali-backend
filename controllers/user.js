@@ -52,11 +52,15 @@ const {
   user_not_valid,
   stack_user_not_valid,
   unique_user_data,
-  stack_unique_user_data
+  stack_unique_user_data,
+  stack_invalid_data_update
 } = require('../util/error-message');
 const sendEmail = require('../helper-function/send-email');
 const processQueryGetAllUserPending = require('../helper-function/process-query-get-all-user-pending');
 const processQueryGetAllUserActive = require('../helper-function/process-query-get-all-user-active');
+const getConnection = require("../helper-function/get-connection");
+const processDate = require('../helper-function/process-date');
+const processDateOnly = require('../helper-function/process-date only');
 
 exports.registerUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
@@ -107,8 +111,9 @@ exports.loginUser = async (req, res, next) => {
     const [user] = await User.getUserByKey('user_email', req.body.email);
     if (user.length <= 0) throw(processError(message, user_not_found, stack_user_not_found));
     if (user[0].user_status == 2) throw(processError(message, user_suspend, stack_user_suspend));
+    if (user[0].user_role == 3) throw(processError(message, user_not_found, stack_user_not_found));
     const isCorrectPassword = await bcrypt.compare(req.body.password, user[0].user_password);
-    if (!isCorrectPassword) throw(processError(message, password_wrong, stack_password_wrong))
+    if (!isCorrectPassword) throw(processError(message, password_wrong, stack_password_wrong));
 
     // 3) create jsonwebtoken dengan secret key di env, expired 3 hari
     const token = jwt.sign({user_id: user[0].user_id, user_email: user[0].user_email, user_role: user[0].user_role, user_status: user[0].user_status}, process.env.SECRET_KEY, { algorithm: 'HS512'}, { expiresIn: '7d' });
@@ -238,6 +243,7 @@ exports.getAllUserNotPending = async (req, res, next) => {
     const queryData = processQueryGetAllUserActive(req);
     const [users] = await User.getAllUser(queryData.query);
     const [totalData] = await User.getTotalData(queryData.query);
+    const [kota] = await Kota.getAllKota(`SELECT kota_id, kota_nama FROM kota`);
 
     data = {
       page: req.query.page ? req.query.page == 0 ? 1 : req.query.page : 1,
@@ -256,13 +262,13 @@ exports.getAllUserNotPending = async (req, res, next) => {
         if (req.userData.user_role == 2) {
           delete val.kota_id;
           delete val.user_last_update;
-          delete val.user_created_at;
           delete val.user_vin;
           delete val.user_role;
           delete val.user_status;
         }
         return val;
-      })
+      }),
+      kota: kota
     }
     status = true;
   } catch (err) {
@@ -273,7 +279,7 @@ exports.getAllUserNotPending = async (req, res, next) => {
   }
 }
 
-exports.updateRoleUser = async (req, res, next) => {
+exports.upgradeDowngradeUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
   try {
     if (!req.params.id) throw(processError(message, invalid_request, stack_invalid_parameter));
@@ -313,8 +319,6 @@ exports.reviewApproveRejectForm = async (req, res, next) => {
     
     if (req.body.status_form == 1) {
       if (!req.body.kota) throw(processError(message, kota_required, stack_kota_required));
-      console.log(req.body)
-      console.log(user[0])
       const [kota] = await Kota.getKotaById(req.body.kota);
       if (kota.length <= 0) throw(processError(message, kota_not_exist, stack_kota_not_exist));
       // if (user[0].user_detail && user[0].user_detail.note) delete user[0].user_detail.note;
@@ -324,6 +328,9 @@ exports.reviewApproveRejectForm = async (req, res, next) => {
         user_vin: user[0].user_detail.user_vin,
         user_plat: user[0].user_detail.user_plat
       }
+      delete user[0].user_detail.user_nama;
+      delete user[0].user_detail.user_vin;
+      delete user[0].user_detail.user_plat;
       const resultUpdate = await User.updateDataUserForm(req.params.id, userData, req.body.kota);
       if (resultUpdate.affectedRows <= 0) throw(processError(message, update_status_failed, stack_update_status_failed));
     } else {
@@ -334,7 +341,6 @@ exports.reviewApproveRejectForm = async (req, res, next) => {
     }
     status = true;
   } catch (err) {
-    console.log(err);
     error = err.error;
     stack = err.stack;
   } finally {
@@ -344,29 +350,79 @@ exports.reviewApproveRejectForm = async (req, res, next) => {
 
 exports.updateDataUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
+  const conn = await getConnection();
   try {
+    await conn.beginTransaction();
     if (!req.params.id) throw(processError(message, invalid_request, stack_invalid_parameter));
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       let errorRequest = processErrorForm(errors.array());
-      throw(processError(validation, errorRequest, stack_resend_email));
+      throw(processError(validation, errorRequest, stack_invalid_data_update));
     }
+
+    // 2) cek user_vin, user_nama, user_plat sudah ada / tidak (wajib unique)
+    const [user] = await User.getUserByNamaVinPlat(req.body); 
+    if (user.length > 0) {
+      let otherUser = user.find(val => val.user_id != req.params.id);
+      if (otherUser) throw(processError(message, unique_user_data, stack_unique_user_data));
+    }
+
+    // 3) proses data masing2 per key
+    const objDetail = {
+      nomor_id:  req.body.nomor_id,
+      nama_panggilan:  req.body.nama_panggilan,
+      tanggal_lahir: processDateOnly(new Date(req.body.tanggal_lahir).getTime()),
+      alamat_ktp:  req.body.alamat_ktp,
+      alamat_domisili:  req.body.alamat_domisili,
+      kota_domisili:  req.body.kota_domisili,
+      provinsi_domisili:  req.body.provinsi_domisili,
+      pekerjaan:  req.body.pekerjaan,
+      nomor_telepon_current:  req.body.nomor_telepon_current,
+      nomor_telepon_telegram:  req.body.nomor_telepon_telegram,
+      nomor_telepon_whatsapp:  req.body.nomor_telepon_whatsapp,
+      nomor_telepon_emergency:  req.body.nomor_telepon_emergency,
+      golongan_darah:  req.body.golongan_darah,
+      informasi_wali: req.body.informasi_wali,
+      snk: req.body.snk,
+      emoney:  req.body.emoney
+    }
+
+    // 4) insert ke user_detail
+    const [resultUpdateDetail] = await User.insertOrUpdateDetailUser(req.params.id, objDetail);
+    if (resultUpdateDetail.affectedRows <= 0) throw(processError(message, update_status_failed, stack_update_status_failed));
+    
+    const userData = {
+      user_nama: req.body.nama_lengkap,
+      user_vin: req.body.nomor_vin,
+      user_plat: req.body.nomor_polisi
+    }
+
+    const resultUpdate = await User.updateDataUserForm(req.params.id, userData, req.body.kota_id);
+    if (resultUpdate.affectedRows <= 0) throw(processError(message, update_status_failed, stack_update_status_failed));
     status = true;
+    await conn.commit();
   } catch (err) {
     error = err.error;
     stack = err.stack;
+    await conn.rollback();
   } finally {
+    await conn.release();
     sendResponse(res, status, data, error, stack);
   }
 }
 
-exports.blockUser = async (req, res, next) => {
+exports.updateStatusUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
   try {
     if (!req.params.id) throw(processError(message, invalid_request, stack_invalid_parameter));
     if (req.userData.user_id == req.params.id) throw(processError(message, invalid_request, stack_forbidden));
-    const [resultUpdate] = await User.updateStatusUser(req.params.id, '4'); // block user yang status dari aktif saja
-    console.log(resultUpdate.affectedRows);
+    if (!req.body.user_status) throw(processError(message, invalid_request, stack_invalid_parameter));
+    
+    const [user] = await User.getUserByKey('user_id', req.params.id);
+    if (user.length <= 0) throw(processError(message, invalid_request, stack_user_not_found));
+    if (req.body.user_status == user[0].user_status) throw(processError(message, invalid_request, stack_invalid_parameter)); // tidak bisa update dengan status sama
+    if (req.body.user_status == 3) throw(processError(message, invalid_request, stack_invalid_parameter)); // tidak bisa update jd pending
+    await User.updateStatusUser(req.params.id, req.body.user_status); // update status user
     status = true;
   } catch (err) {
     error = err.error;

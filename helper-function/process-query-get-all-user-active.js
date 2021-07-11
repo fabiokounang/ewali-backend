@@ -1,9 +1,9 @@
 module.exports = (req) => {
-  let query = `SELECT user_id, u.kota_id, k.kota_nama, user_email, user_nama, user_vin, user_plat, user_role, user_status, user_detail, user_last_update, user_created_at, user_activate FROM user AS u LEFT JOIN kota AS k ON u.kota_id = k.kota_id WHERE user_status NOT IN (3,4)`;
-  if (req.userData.user_role == 2) query += ` AND kota_id = ${req.userData.kota_id}`;
+  let query = `SELECT user_id, u.kota_id, k.kota_nama, u.user_email, u.user_nama, u.user_vin, u.user_plat, u.user_role, u.user_status, u.user_detail, u.user_created_at, u.user_last_update, u.user_activate FROM user AS u LEFT JOIN kota AS k ON u.kota_id = k.kota_id WHERE user_status NOT IN (3)`;
+  if (req.userData.user_role == 2) query += ` AND u.kota_id = ${req.userData.kota_id} AND u.user_id != ${req.userData.user_id}`;
   let page = 0;
   let limit = 10;
-  let sort_attr = 'user_last_update';
+  let sort_attr = 'user_created_at';
   let sort = 'DESC';
   let search = '';
   let filteredKeys = [];
@@ -11,7 +11,7 @@ module.exports = (req) => {
   
   limit = req.query.limit ? +req.query.limit : limit;
   page = req.query.page ? ((+req.query.page -1) * limit) : (page * limit);
-  if (['user_email', 'user_nama', 'user_last_update', 'user_created_at'].includes(sort_attr)) sort_attr = req.query.sort_attr ? req.query.sort_attr : sort_attr;
+  if (['user_email', 'user_nama', 'user_created_at'].includes(sort_attr)) sort_attr = req.query.sort_attr ? req.query.sort_attr : sort_attr;
   sort = req.query.sort ? req.query.sort == 1 ? 'ASC' : 'DESC' : sort;
   search = req.query.search ? req.query.search : search;
   filteredKeys = Object.keys(req.query).filter(val => val.includes('filter_'));

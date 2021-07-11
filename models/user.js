@@ -36,7 +36,6 @@ module.exports = class User {
   }
 
   static updateDataUserForm (userId, data, kotaId) {
-    console.log(userId, data, kotaId);
     return database.execute(`UPDATE user SET user_nama = ?, user_vin = ?, user_plat = ?, user_status = ?, kota_id = ? WHERE user_id = ?`, [data.user_nama, data.user_vin, data.user_plat, '1', kotaId, userId]);
   }
 
@@ -45,6 +44,6 @@ module.exports = class User {
   }
 
   static updateStatusUser (userId, status) {
-    return database.execute(`UPDATE user SET user_status = ? WHERE user_id = ? AND user_status = 3`, [status, userId]);
+    return database.execute(`UPDATE user SET user_status = ? WHERE user_id = ?`, [status, userId]);
   }
 }
