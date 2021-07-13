@@ -461,3 +461,22 @@ exports.deleteUser = async (req, res, next) => {
     sendResponse(res, status, data, error, stack);
   }
 }
+
+exports.activateUser = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
+  try {
+    if (!req.params.id) throw(processError(message, invalid_request, stack_invalid_parameter));
+    if (req.userData.user_id == req.params.id) throw(processError(message, invalid_request, stack_forbidden));
+    const [user] = await User.getUserByKey('user_id', req.params.id);
+    if (user.length <= 0) throw(processError(message, invalid_request, stack_user_not_found));
+    if (user[0].user_activate == 1) throw(processError(message, invalid_request, stack_forbidden));
+    const [resultUpdate] = await User.activateUser(user[0].user_id);
+    if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_update_verified_failed));
+    status = true;
+  } catch (err) {
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}

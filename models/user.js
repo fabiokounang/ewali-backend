@@ -46,4 +46,8 @@ module.exports = class User {
   static updateStatusUser (userId, status) {
     return database.execute(`UPDATE user SET user_status = ? WHERE user_id = ?`, [status, userId]);
   }
+
+  static activateUser (userId) {
+    return database.execute(`UPDATE user SET user_activate = ? WHERE user_id = ?`, ['1', userId]);
+  }
 }

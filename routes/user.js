@@ -301,6 +301,7 @@ router.put('/review_form/v1_0/:id', checkAuth, checkOnlyAdmin, [
     })
 ], userController.reviewApproveRejectForm);
 router.put('/status/v1_0/:id', checkAuth, checkOnlyAdmin, userController.updateStatusUser);
+router.put('/activate/v1_0/:id', checkAuth, checkOnlyAdmin, userController.activateUser);
 router.put('/v1_0/:id', checkAuth, checkOnlyAdmin, [
   body('nomor_id')
     .optional({ checkFalsy: true })
@@ -412,6 +413,7 @@ router.put('/v1_0/:id', checkAuth, checkOnlyAdmin, [
       }
     })
 ], userController.updateDataUser);
+
 router.delete('/:id', checkOnlyAdmin, userController.deleteUser);
 
 module.exports = router;

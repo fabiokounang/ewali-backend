@@ -93,4 +93,5 @@ module.exports = {
   stack_forbidden_submit: 'User tidak boleh submit lagi sebelum direview dengan admin / setelah diapprove oleh admin',
   stack_user_not_valid: 'User yang akan direview form, harus user role 3 (user)',
   stack_unique_user_data: 'User nama / nomor vin / nomor polisi sudah terdaftar',
+  stack_update_verified_failed: 'Aktivasi user gagal, error database'
 }
