@@ -93,7 +93,38 @@ router.post('/register/v1_0', [
     })
 ], userController.registerUser);
 
-router.post('/login/v1_0', [
+router.post('/login_admin/v1_0', [
+  body('email')
+    .trim()
+    .notEmpty().withMessage(email_required)
+    .isString().withMessage(email_format)
+    .custom((value, {req}) => {
+      try {
+        if (!value) throw(email_required);
+        const isValid = checkEmailFormat(value);
+        if (!isValid) throw(email_format);
+        return true;
+      } catch (error) {
+        throw(typeof(error) === 'string' ? error : general);
+      }
+    }),
+  body('password')
+    .trim()
+    .notEmpty().withMessage(password_required)
+    .isLength({ min: 6, max: 30 }).withMessage(password_min_max_length)
+    .custom((value, {req}) => {
+      try {
+        if (!value) throw(password_required);
+        const isValid = checkPasswordHelper(value);
+        if (!isValid.status) throw(password_format);
+        return true;
+      } catch (error) {
+        throw(typeof(error) === 'string' ? error : general);
+      }
+    }),
+], userController.loginAdmin);
+
+router.post('/login_user/v1_0', [
   body('email')
     .trim()
     .notEmpty().withMessage(email_required)

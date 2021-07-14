@@ -5,27 +5,27 @@ module.exports = (req) => {
   let sort_attr = 'user_last_update';
   let sort = 'DESC';
   let search = '';
-  let filteredKeys = [];
-  let objFilterSearch = [];
+  // let filteredKeys = [];
+  // let objFilterSearch = [];
   
   limit = req.query.limit ? +req.query.limit : limit;
   page = req.query.page ? ((+req.query.page -1) * limit) : (page * limit);
   if (['user_email', 'user_nama', 'user_last_update', 'user_created_at'].includes(sort_attr)) sort_attr = req.query.sort_attr ? req.query.sort_attr : sort_attr;
   sort = req.query.sort ? req.query.sort == 1 ? 'ASC' : 'DESC' : sort;
   search = req.query.search ? req.query.search : search;
-  filteredKeys = Object.keys(req.query).filter(val => val.includes('filter_'));
+  // filteredKeys = Object.keys(req.query).filter(val => val.includes('filter_'));
 
-  if (filteredKeys.length > 0) {
-    filteredKeys.forEach((key) => {
-      let queryKey = key.split('_').slice(1).join('_');
-      if (key.includes('kota_id')) {
-        objFilterSearch.push('k.' + queryKey + ' = ' + req.query[key]);
-      } else {
-        objFilterSearch.push(queryKey + ' = ' + req.query[key]);
-      }
-    });
-    query += ` AND ${objFilterSearch.join(' AND ')}`;
-  }
+  // if (filteredKeys.length > 0) {
+  //   filteredKeys.forEach((key) => {
+  //     let queryKey = key.split('_').slice(1).join('_');
+  //     if (key.includes('kota_id')) {
+  //       objFilterSearch.push('k.' + queryKey + ' = ' + req.query[key]);
+  //     } else {
+  //       objFilterSearch.push(queryKey + ' = ' + req.query[key]);
+  //     }
+  //   });
+  //   query += ` AND ${objFilterSearch.join(' AND ')}`;
+  // }
 
   //user_nama;user_email;user_plat;user_vin;user_hp
   if (search) query += ` AND user_nama LIKE '%${search}%' OR user_email LIKE '%${search}%' OR user_plat LIKE '%${search}%' OR user_vin LIKE '%${search}%' OR JSON_UNQUOTE(JSON_EXTRACT(user_detail, "$.nomor_telepon_current")) LIKE '%${search}%'`;

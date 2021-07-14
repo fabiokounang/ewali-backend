@@ -53,7 +53,9 @@ const {
   stack_user_not_valid,
   unique_user_data,
   stack_unique_user_data,
-  stack_invalid_data_update
+  stack_invalid_data_update,
+  stack_user_block,
+  user_block
 } = require('../util/error-message');
 const sendEmail = require('../helper-function/send-email');
 const processQueryGetAllUserPending = require('../helper-function/process-query-get-all-user-pending');
@@ -97,6 +99,46 @@ exports.registerUser = async (req, res, next) => {
   }
 }
 
+exports.loginAdmin = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
+  try {
+    // 1) validasi data request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      let errorRequest = processErrorForm(errors.array());
+      throw(processError(validation, errorRequest, stack_invalid_data_register));
+    }
+
+    // 2) cek email terdaftar, status wajib aktif / pending dan password harus benar
+    const [user] = await User.getUserByKey('user_email', req.body.email);
+    if (user.length <= 0) throw(processError(message, user_not_found, stack_user_not_found));
+    if (user[0].user_status == 2) throw(processError(message, user_suspend, stack_user_suspend));
+    if (user[0].user_status == 4) throw(processError(message, user_block, stack_user_block));
+    if (user[0].user_role == 3) throw(processError(message, user_not_found, stack_user_not_found));
+    const isCorrectPassword = await bcrypt.compare(req.body.password, user[0].user_password);
+    if (!isCorrectPassword) throw(processError(message, password_wrong, stack_password_wrong));
+
+    // 3) create jsonwebtoken dengan secret key di env, expired 3 hari
+    const token = jwt.sign({user_id: user[0].user_id, user_email: user[0].user_email, user_role: user[0].user_role, user_status: user[0].user_status}, process.env.SECRET_KEY, { algorithm: 'HS512'}, { expiresIn: '7d' });
+    
+    data = {
+      user_id: user[0].user_id,
+      user_email: user[0].user_email,
+      user_nama: user[0].user_nama || null,
+      user_role: +user[0].user_role,
+      user_status: +user[0].user_status
+    }
+    const cookieOptions = sendCookie(req);
+    res.cookie('tokenadmin', token, cookieOptions);
+    status = true;
+  } catch (err) {
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}
+
 exports.loginUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
   try {
@@ -111,7 +153,8 @@ exports.loginUser = async (req, res, next) => {
     const [user] = await User.getUserByKey('user_email', req.body.email);
     if (user.length <= 0) throw(processError(message, user_not_found, stack_user_not_found));
     if (user[0].user_status == 2) throw(processError(message, user_suspend, stack_user_suspend));
-    if (user[0].user_role == 3) throw(processError(message, user_not_found, stack_user_not_found));
+    if (user[0].user_status == 4) throw(processError(message, user_block, stack_user_block));
+    if (user[0].user_role == 1) throw(processError(message, user_not_found, stack_user_not_found));
     const isCorrectPassword = await bcrypt.compare(req.body.password, user[0].user_password);
     if (!isCorrectPassword) throw(processError(message, password_wrong, stack_password_wrong));
 
@@ -450,18 +493,6 @@ exports.getLogin = async (req, res, next) => {
   }
 }
 
-exports.deleteUser = async (req, res, next) => {
-  let { status, data, error, stack} = returnData();
-  try {
-    status = true;
-  } catch (err) {
-    error = err.error;
-    stack = err.stack;
-  } finally {
-    sendResponse(res, status, data, error, stack);
-  }
-}
-
 exports.activateUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
   try {
@@ -472,6 +503,18 @@ exports.activateUser = async (req, res, next) => {
     if (user[0].user_activate == 1) throw(processError(message, invalid_request, stack_forbidden));
     const [resultUpdate] = await User.activateUser(user[0].user_id);
     if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_update_verified_failed));
+    status = true;
+  } catch (err) {
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}
+
+exports.deleteUser = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
+  try {
     status = true;
   } catch (err) {
     error = err.error;

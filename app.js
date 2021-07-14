@@ -5,9 +5,11 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const app = express();
 const cors = require('cors');
-const database = require('./util/database');
 const user = require('./routes/user');
 const kota = require('./routes/kota');
+
+const database = require('./util/database');
+const initializeDefaultUser = require('./helper-function/initialize-default-user');
 
 const port = process.env.PORT || 3000;
 
@@ -21,7 +23,8 @@ app.use('/api/kota', kota);
 
 database.getConnection().then(() => {
   console.log('Database ewali connected');
+  // initializeDefaultUser(); // clear db, dan create admin default
   app.listen(port, () => {
     console.log('Server ewali is listening to port ' + port);
   });
-}).catch(err => console.log('Error connecting database'));
+}).catch(err => console.log('Error connecting database', err));

@@ -15,8 +15,8 @@ function helperResponse(error) {
 module.exports = async (req, res, next) => {
   let { status, data, error, stack } = returnData();
   try {
-    if (!req.cookies.tokenuser) return helperResponse(error);
-    const token = req.cookies.tokenuser; // token
+    if (!req.cookies.tokenadmin) return helperResponse(error);
+    const token = req.cookies.tokenadmin; // token
     if (!token) return helperResponse(error);
     const decoded = await promisify(jwt.verify)(token, process.env.SECRET_KEY);
     const [userData] = await User.getUserByKey('user_id', decoded.user_id);
