@@ -30,6 +30,6 @@ module.exports = (req) => {
   if (sort_attr) query += ` ORDER BY ${sort_attr} `;
   if (sort && sort_attr) query += sort;
   if (limit != -1) query +=  ` LIMIT ${page},${limit}`;
-  console.log(query);
+  // console.log(query);
   return { query: query, limit: limit }
 }

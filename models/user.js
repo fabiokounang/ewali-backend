@@ -50,4 +50,20 @@ module.exports = class User {
   static activateUser (userId) {
     return database.execute(`UPDATE user SET user_activate = ? WHERE user_id = ?`, ['1', userId]);
   }
+
+  static updatePassword (userId, password) {
+    return database.execute(`UPDATE user SET user_password = ? WHERE user_id = ?`, [password, userId]);
+  }
+
+  static updatePasswordAndDeleteToken (userId, password) {
+    return database.execute(`UPDATE user SET user_password = ?, user_token_password = ?, user_token_expired = ? WHERE user_id = ?`, [password, null, null, userId]);
+  }
+
+  static updateToken (token, expired, userId) {
+    return database.execute(`UPDATE user SET user_token_password = ?, user_token_expired = ? WHERE user_id = ?`, [token, expired, userId]);
+  }
+
+  static getUserByTokenAndExpired (token) {
+    return database.execute(`SELECT user_id, user_token_password, user_token_expired FROM user WHERE user_token_password = ?`, [token]);
+  }
 }

@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const salt = bcrypt.genSaltSync(12);
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const User = require('../models/user');
 const Kota = require('../models/kota');
@@ -55,7 +56,14 @@ const {
   stack_unique_user_data,
   stack_invalid_data_update,
   stack_user_block,
-  user_block
+  user_block,
+  old_password_wrong,
+  stack_old_password_wrong,
+  stack_invalid_data_change_password,
+  stack_invalid_data_forget_password,
+  stack_invalid_data_reset_password,
+  invalid_token,
+  stack_invalid_token
 } = require('../util/error-message');
 const sendEmail = require('../helper-function/send-email');
 const processQueryGetAllUserPending = require('../helper-function/process-query-get-all-user-pending');
@@ -129,7 +137,7 @@ exports.loginAdmin = async (req, res, next) => {
       user_status: +user[0].user_status
     }
     const cookieOptions = sendCookie(req);
-    res.cookie('tokenadmin', token, cookieOptions);
+    res.cookie('token', token, cookieOptions);
     status = true;
   } catch (err) {
     error = err.error;
@@ -169,7 +177,7 @@ exports.loginUser = async (req, res, next) => {
       user_status: +user[0].user_status
     }
     const cookieOptions = sendCookie(req);
-    res.cookie('tokenuser', token, cookieOptions);
+    res.cookie('token', token, cookieOptions);
     status = true;
   } catch (err) {
     error = err.error;
@@ -512,9 +520,100 @@ exports.activateUser = async (req, res, next) => {
   }
 }
 
+exports.changePassword = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      let errorRequest = processErrorForm(errors.array());
+      throw(processError(validation, errorRequest, stack_invalid_data_change_password));
+    }
+    const [user] = await User.getUserByKey('user_id', req.userData.user_id);
+    const isOldPasswordCorrect = await bcrypt.compare(req.body.old_password, user[0].user_password);
+    if (!isOldPasswordCorrect) throw(processError(message, old_password_wrong, stack_old_password_wrong));
+    const hashPassword = await bcrypt.hash(req.body.new_password, salt);
+    const [resultUpdate] = await User.updatePassword(req.userData.user_id, hashPassword);
+    if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_update_password_failed));
+    status = true;
+  } catch (err) {
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}
+
+exports.forgetPassword = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      let errorRequest = processErrorForm(errors.array());
+      throw(processError(validation, errorRequest, stack_invalid_data_forget_password));
+    }
+    const [user] = await User.getUserByKey('user_email', req.body.email);
+    if (user.length <= 0) throw(processError(message, user_not_found, stack_user_not_found));
+    let resetToken = crypto.randomBytes(64).toString('hex');
+    let passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex'); // encrypt
+    let passwordResetExpired = processDate(Date.now() + 10800000); // + 3 jam
+    let [resultUpdate] = await User.updateToken(passwordResetToken, passwordResetExpired, user[0].user_id);
+    if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_forget_password));
+
+    // send email token nya (resetToken)
+    data = {
+      token_temp: resetToken
+    }
+    status = true;
+  } catch (err) {
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}
+
+exports.resetPassword = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      let errorRequest = processErrorForm(errors.array());
+      throw(processError(validation, errorRequest, stack_invalid_data_reset_password));
+    }
+    if (!req.params.token) throw(processError(message, invalid_request, stack_invalid_parameter));
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const [user] = await User.getUserByTokenAndExpired(hashedToken);
+    if (user.length <= 0) throw(processError(message, invalid_token, stack_invalid_token));
+    if (Date.now() > new Date(user[0].user_token_expired).getTime()) throw(processError(message, user_token_expired, stack_user_token_expired));
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+    const [resultUpdate] = await User.updatePasswordAndDeleteToken(user[0].user_id, hashedPassword);
+    if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_update_password_failed));
+    status = true;
+  } catch (err) {
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}
+
 exports.deleteUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
   try {
+    status = true;
+  } catch (err) {
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}
+
+exports.logout = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
+  try {
+    const cookieOptions = sendCookie(req, true);
+    res.cookie('token', '', cookieOptions);
     status = true;
   } catch (err) {
     error = err.error;

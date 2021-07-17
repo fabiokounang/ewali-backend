@@ -61,6 +61,9 @@ module.exports = {
   user_still_pending: 'User upgrade / downgrade hanya user dengan status aktif / suspend',
   user_not_valid: 'User tidak valid',
   unique_user_data: 'User nama / nomor vin / nomor polisi sudah terdaftar',
+  old_password_wrong: 'Password lama tidak sesuai',
+  user_token_expired: 'Token sudah expired, silahkan coba forget password kembali',
+  invalid_token: 'Token reset password tidak valid / sudah expire',
   // stack
   stack_invalid_data_register: 'Data register tidak valid',
   stack_invalid_data_update: 'Data update tidak valid',
@@ -95,5 +98,13 @@ module.exports = {
   stack_forbidden_submit: 'User tidak boleh submit lagi sebelum direview dengan admin / setelah diapprove oleh admin',
   stack_user_not_valid: 'User yang akan direview form, harus user role 3 (user)',
   stack_unique_user_data: 'User nama / nomor vin / nomor polisi sudah terdaftar',
-  stack_update_verified_failed: 'Aktivasi user gagal, error database'
+  stack_update_verified_failed: 'Aktivasi user gagal, error database',
+  stack_old_password_wrong: 'Password lama tidak sesuai',
+  stack_update_password_failed: 'Gagal mengupdate password, error database',
+  stack_invalid_data_change_password: 'Data change password tidak valid',
+  stack_invalid_data_forget_password: 'Data forget password tidak valid',
+  stack_invalid_data_reset_password: 'Data reset password tidak valid',
+  stack_forget_password: 'Gagal mengupdate token password',
+  stack_user_token_expired: 'User token sudah expired',
+  stack_invalid_token: 'Token tidak valid'
 }

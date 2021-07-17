@@ -156,9 +156,6 @@ router.post('/login_user/v1_0', [
 ], userController.loginUser);
 
 router.post('/submit_form/v1_0', checkAuth, checkOnlyUser, [
-  body('kota_id')
-    .trim()
-    .notEmpty().withMessage(kota_required),
   body('nomor_id')
     .optional({ checkFalsy: true })
     .trim()
@@ -301,8 +298,98 @@ router.post('/resend_email/v1_0', checkAuth, [
 
 router.get('/get_login/v1_0', checkAuth, userController.getLogin);
 
+router.post('/forget_password/v1_0', [
+  body('email')
+    .trim()
+    .notEmpty().withMessage(email_required)
+    .isString().withMessage(email_format)
+    .custom((value, {req}) => {
+      try {
+        if (!value) throw(email_required);
+        const isValid = checkEmailFormat(value);
+        if (!isValid) throw(email_format);
+        return true;
+      } catch (error) {
+        throw(typeof(error) === 'string' ? error : general);
+      }
+    })
+], userController.forgetPassword);
+
+router.post('/reset_password/v1_0/:token', [
+  body('password')
+    .trim()
+    .notEmpty().withMessage(password_required)
+    .isLength({ min: 6, max: 30 }).withMessage(password_min_max_length)
+    .custom((value, {req}) => {
+      try {
+        if (!value) throw(password_required);
+        const isValid = checkPasswordHelper(value);
+        if (!isValid.status) throw(password_format);
+        return true;
+      } catch (error) {
+        throw(typeof(error) === 'string' ? error : general);
+      }
+    }),
+  body('confirmation_password')
+    .trim()
+    .notEmpty().withMessage(confirmation_password_required)
+    .custom((value, {req}) => {
+      try {
+        if (!value) throw(confirmation_password_required);
+        if (value != req.body.password) throw(password_match)
+        return true;
+      } catch (error) {
+        throw(typeof(error) === 'string' ? error : general);
+      }
+    })
+], userController.resetPassword);
+
+router.delete('/v1_0', checkAuth, userController.logout);
+
 // fitur yang hanya bisa diakses oleh admin dan ketua chapter
 router.get('/v1_0', checkAuth, checkAuthAdminChapter, userController.getAllUserNotPending);
+router.put('/change_password/v1_0', checkAuth, checkAuthAdminChapter, [
+  body('old_password')
+    .trim()
+    .notEmpty().withMessage(password_required)
+    .isLength({ min: 6, max: 30 }).withMessage(password_min_max_length)
+    .custom((value, {req}) => {
+      try {
+        if (!value) throw(password_required);
+        const isValid = checkPasswordHelper(value);
+        if (!isValid.status) throw(password_format);
+        return true;
+      } catch (error) {
+        throw(typeof(error) === 'string' ? error : general);
+      }
+    }),
+  body('new_password')
+    .trim()
+    .notEmpty().withMessage(password_required)
+    .isLength({ min: 6, max: 30 }).withMessage(password_min_max_length)
+    .custom((value, {req}) => {
+      try {
+        if (!value) throw(password_required);
+        const isValid = checkPasswordHelper(value);
+        if (!isValid.status) throw(password_format);
+        return true;
+      } catch (error) {
+        throw(typeof(error) === 'string' ? error : general);
+      }
+    }),
+  body('confirmation_password')
+    .trim()
+    .notEmpty().withMessage(confirmation_password_required)
+    .custom((value, {req}) => {
+      try {
+        if (!value) throw(confirmation_password_required);
+        if (value != req.body.new_password) throw(password_match)
+        return true;
+      } catch (error) {
+        throw(typeof(error) === 'string' ? error : general);
+      }
+    })
+], userController.changePassword);
 
 // fitur yang hanya bisa diakses oleh admin
 router.get('/pending/v1_0', checkAuth, checkOnlyAdmin, userController.getAllUserPending);
