@@ -71,6 +71,7 @@ const processQueryGetAllUserActive = require('../helper-function/process-query-g
 const getConnection = require("../helper-function/get-connection");
 const processDate = require('../helper-function/process-date');
 const processDateOnly = require('../helper-function/process-date only');
+const sendManyEmail = require('../helper-function/send-many-email');
 
 exports.registerUser = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
@@ -94,10 +95,21 @@ exports.registerUser = async (req, res, next) => {
     let [resultInsert] = await User.createUser(objDataRegister);
     if (resultInsert.affectedRows < 1) throw(processError(message, register_failed, stack_register_failed));
 
-    // 4) kirim email aktivasi
-    // await sendEmail(req.body.email);
+    // 4) create token
+    let token = crypto.randomBytes(64).toString('hex');
+    let registerToken = crypto.createHash('sha256').update(token).digest('hex'); // encrypt
+    let registerExpired = processDate(Date.now() + 10800000); // + 3 jam
+    let [resultUpdate] = await User.updateToken(registerToken, registerExpired, resultInsert.insertId);
+    if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_invalid_data_register));
 
-    data = { user_id: resultInsert.insertId }
+    // 4) kirim email aktivasi ke user yang daftar
+    sendEmail(req.body.email, token);
+
+    // 5) kirim email kalo ada yg register ke semua admin
+    const [adminEmails] = await User.getUserByKey('user_role', '1');
+    if (adminEmails.length > 0) sendManyEmail(adminEmails.map(val => val.user_email), req.body.email);
+
+    data = { user_id: resultInsert.insertId, token: token }
     status = true;
   } catch (err) {
     error = err.error;
@@ -249,9 +261,18 @@ exports.resendEmail = async (req, res, next) => {
       let errorRequest = processErrorForm(errors.array());
       throw(processError(validation, errorRequest, stack_resend_email));
     }
+    if (req.userData.user_activate == 1) throw(processError(message, invalid_request, stack_resend_email));
+
+    // 2) create token
+    let token = crypto.randomBytes(64).toString('hex');
+    let registerToken = crypto.createHash('sha256').update(token).digest('hex'); // encrypt
+    let registerExpired = processDate(Date.now() + 10800000); // + 3 jam
+    let [resultUpdate] = await User.updateToken(registerToken, registerExpired, req.userData.user_id);
+    if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_resend_email));
 
     // 2) kirim email aktivasi
-    // await sendEmail(req.body.email);
+    await sendEmail(req.userData.user_email, token);
+    data = { token }
     status = true;
   } catch (err) {
     error = err.error;
@@ -587,6 +608,25 @@ exports.resetPassword = async (req, res, next) => {
     if (Date.now() > new Date(user[0].user_token_expired).getTime()) throw(processError(message, user_token_expired, stack_user_token_expired));
     const hashedPassword = await bcrypt.hash(req.body.password, salt);
     const [resultUpdate] = await User.updatePasswordAndDeleteToken(user[0].user_id, hashedPassword);
+    if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_update_password_failed));
+    status = true;
+  } catch (err) {
+    error = err.error;
+    stack = err.stack;
+  } finally {
+    sendResponse(res, status, data, error, stack);
+  }
+}
+
+exports.verifikasiEmail = async (req, res, next) => {
+  let { status, data, error, stack} = returnData();
+  try {
+    if (!req.params.token) throw(processError(message, invalid_request, stack_invalid_parameter));
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const [user] = await User.getUserByTokenAndExpired(hashedToken);
+    if (user.length <= 0) throw(processError(message, invalid_token, stack_invalid_token));
+    if (Date.now() > new Date(user[0].user_token_expired).getTime()) throw(processError(message, user_token_expired, stack_user_token_expired));
+    const [resultUpdate] = await User.activateUserAndDeleteToken(user[0].user_id);
     if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_update_password_failed));
     status = true;
   } catch (err) {

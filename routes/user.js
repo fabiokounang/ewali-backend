@@ -279,22 +279,7 @@ router.post('/submit_form/v1_0', checkAuth, checkOnlyUser, [
     })
 ], userController.submitForm);
 
-router.post('/resend_email/v1_0', checkAuth, [
-  body('email')
-    .trim()
-    .notEmpty().withMessage(email_required)
-    .isString().withMessage(email_format)
-    .custom((value, {req}) => {
-      try {
-        if (!value) throw(email_required);
-        const isValid = checkEmailFormat(value);
-        if (!isValid) throw(email_format);
-        return true;
-      } catch (error) {
-        throw(typeof(error) === 'string' ? error : general);
-      }
-    })
-], userController.resendEmail);
+router.post('/resend_email/v1_0', checkAuth, userController.resendEmail);
 
 router.get('/get_login/v1_0', checkAuth, userController.getLogin);
 
@@ -344,6 +329,7 @@ router.post('/reset_password/v1_0/:token', [
     })
 ], userController.resetPassword);
 
+router.put('/verif_email/v1_0/:token', userController.verifikasiEmail);
 router.delete('/v1_0', checkAuth, userController.logout);
 
 // fitur yang hanya bisa diakses oleh admin dan ketua chapter

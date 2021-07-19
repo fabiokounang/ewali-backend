@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-module.exports = async (email, token) => {
+module.exports = async (adminEmails, userEmail) => {
   try {
     // Step 1
     let transporter = await nodemailer.createTransport({
@@ -15,21 +15,14 @@ module.exports = async (email, token) => {
       logger: true
     });
 
-    // let html = fs.readFileSync('/home/config/emailforgetpass.html', 'utf-8');
-    // html = html.replace('REPLACE_USERNAME', email);
-    // html = html.replace(/REPLACE_URL_PUBLIC/g, process.env.URL_PUBLIC);
-    // html = html.replace('REPLACE_YEAR', new Date().getFullYear().toString());
-    // html = html.replace(/REPLACE_HREF/g, 'https://' + process.env.URL + '/forgetpass/setpass/' + code);
-    // html = html.replace(/href=""/g, 'href="https://' + process.env.URL + '/forgetpass/setpass/"' + code);
-
     // Step 2
     let mailOptions = {
       from: `E-wali <${process.env.EMAIL}>`,
-      to: email,
-      cc: email,
-      bcc: email,
+      to: adminEmails,
+      cc: adminEmails,
+      bcc: adminEmails,
       subject: 'Aktivasi Akun',
-      text: process.env.URL_FRONTEND + '/verifikasi/' + token,
+      text: userEmail + ' berhasil mendaftar di aplikasi !',
       html: html
     }
     const result = await transporter.sendMail(mailOptions);

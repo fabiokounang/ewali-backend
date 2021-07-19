@@ -74,7 +74,7 @@ module.exports = {
   stack_user_block: 'Akun ini telah diblock',
   stack_password_wrong: 'Password yang anda masukkan salah',
   stack_invalid_data_submit_form: 'Data detail user tidak valid',
-  stack_resend_email: 'Email tidak valid',
+  stack_resend_email: 'Tidak boleh resend email',
   stack_permission_must_admin: 'User login harus admin / ketua chapter',
   stack_create_kota_chapter: 'Data kota tidak valid',
   stack_kota_exist: 'Kota sudah terdaftar',

@@ -3,7 +3,7 @@ const database = require("../util/database")
 
 module.exports = class User {
   static getUserByKey (key, value) {
-    return database.execute(`SELECT user_id, kota_id, user_email, user_nama, user_password, user_role, user_status, user_detail FROM user WHERE ${key} = ?`, [value]);
+    return database.execute(`SELECT user_id, kota_id, user_email, user_nama, user_password, user_role, user_status, user_detail, user_activate FROM user WHERE ${key} = ?`, [value]);
   }
 
   static getUserByNamaVinPlat (data) {
@@ -61,6 +61,10 @@ module.exports = class User {
 
   static updateToken (token, expired, userId) {
     return database.execute(`UPDATE user SET user_token_password = ?, user_token_expired = ? WHERE user_id = ?`, [token, expired, userId]);
+  }
+
+  static activateUserAndDeleteToken (userId) {
+    return database.execute(`UPDATE user SET user_token_password = ?, user_token_expired = ?, user_activate = ? WHERE user_id = ?`, [null, null, '1', userId]);
   }
 
   static getUserByTokenAndExpired (token) {
