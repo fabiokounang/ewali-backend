@@ -106,8 +106,8 @@ exports.registerUser = async (req, res, next) => {
     sendEmail(req.body.email, token);
 
     // 5) kirim email kalo ada yg register ke semua admin
-    const [adminEmails] = await User.getUserByKey('user_role', '1');
-    if (adminEmails.length > 0) sendManyEmail(adminEmails.map(val => val.user_email), req.body.email);
+    // const [adminEmails] = await User.getUserByKey('user_role', '1');
+    // if (adminEmails.length > 0) sendManyEmail(adminEmails.map(val => val.user_email), req.body.email);
 
     data = { user_id: resultInsert.insertId, token: token }
     status = true;

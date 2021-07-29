@@ -23,12 +23,13 @@ module.exports = async (adminEmails, userEmail) => {
       bcc: adminEmails,
       subject: 'Aktivasi Akun',
       text: userEmail + ' berhasil mendaftar di aplikasi !',
-      html: html
+      html: ''
     }
     const result = await transporter.sendMail(mailOptions);
-    console.log(result);
+    console.log(result, 'success many');
     return { status: true }
   } catch (error) {
+    console.log(error, 'error many')
     return { status: false, error: error }
   }
 }
