@@ -1,5 +1,5 @@
 module.exports = {
-  general: 'Terjadi kesalahan sistem',
+  general: 'Terjadi kesalahan sistem, silahkan coba beberapa saat lagi',
   auth: 'Session anda telah habis, silahkan login kembali',
   message: 'message',
   validation: 'validation',
@@ -10,7 +10,7 @@ module.exports = {
   email_already_registered: 'Email yang anda masukkan sudah terdaftar, silahkan coba email lain',
   password_required: 'Password wajib diisi',
   password_min_max_length: 'Password minimal 6 karakter / digit',
-  password_format: 'Password wajib alfanumerik (contoh : asd123)',
+  password_format: 'Password wajib alfanumerik (contoh : qwe123)',
   password_match: 'Password dan konfirmasi password tidak sesuai',
   password_wrong: 'Password yang anda masukkan salah',
   confirmation_password_required: 'Konfirmasi password wajib diisi',

@@ -3,7 +3,7 @@ const nodemailer = require("nodemailer");
 module.exports = async (email, token) => {
   try {
     // Step 1
-    let transporter = await nodemailer.createTransport({
+    let transporter = nodemailer.createTransport({
       host: process.env.HOST_EMAIL,
       port: process.env.PORT_EMAIL,
       service: 'Mailjet',
@@ -21,8 +21,9 @@ module.exports = async (email, token) => {
       to: email,
       subject: 'Aktivasi Akun',
       text: process.env.URL_FRONTEND + '/verifikasi/' + token,
-      html: ''
+      html: `<p>${process.env.URL_FRONTEND + '/verifikasi/' + token}</p>`
     }
+
     const result = await transporter.sendMail(mailOptions);
     return { status: true }
   } catch (error) {
