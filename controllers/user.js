@@ -103,7 +103,7 @@ exports.registerUser = async (req, res, next) => {
     if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_invalid_data_register));
 
     // 4) kirim email aktivasi ke user yang daftar
-    sendEmail(req.body.email, token);
+    sendEmail(req.body.email, token, 'verifikasi');
 
     // 5) kirim email kalo ada yg register ke semua admin
     // const [adminEmails] = await User.getUserByKey('user_role', '1');
@@ -271,8 +271,7 @@ exports.resendEmail = async (req, res, next) => {
     if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_resend_email));
 
     // 2) kirim email aktivasi
-    await sendEmail(req.userData.user_email, token);
-    data = { token }
+    sendEmail(req.userData.user_email, token, 'verifikasi');
     status = true;
   } catch (err) {
     error = err.error;
@@ -581,9 +580,7 @@ exports.forgetPassword = async (req, res, next) => {
     if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_forget_password));
 
     // send email token nya (resetToken)
-    data = {
-      token_temp: resetToken
-    }
+    sendEmail(req.body.email, resetToken, 'resetpassword');
     status = true;
   } catch (err) {
     error = err.error;
