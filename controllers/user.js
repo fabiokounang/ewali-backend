@@ -63,7 +63,10 @@ const {
   stack_invalid_data_forget_password,
   stack_invalid_data_reset_password,
   invalid_token,
-  stack_invalid_token
+  stack_invalid_token,
+  user_activated,
+  stack_user_activated,
+  stack_invalid_verifikasi
 } = require('../util/error-message');
 const sendEmail = require('../helper-function/send-email');
 const processQueryGetAllUserPending = require('../helper-function/process-query-get-all-user-pending');
@@ -186,7 +189,8 @@ exports.loginUser = async (req, res, next) => {
       user_email: user[0].user_email,
       user_nama: user[0].user_nama || null,
       user_role: +user[0].user_role,
-      user_status: +user[0].user_status
+      user_status: +user[0].user_status,
+      user_activate: +user[0].user_activate
     }
     const cookieOptions = sendCookie(req);
     res.cookie('token', token, cookieOptions);
@@ -255,12 +259,6 @@ exports.submitForm = async (req, res, next) => {
 exports.resendEmail = async (req, res, next) => {
   let { status, data, error, stack} = returnData();
   try {
-    // 1) validasi data request
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      let errorRequest = processErrorForm(errors.array());
-      throw(processError(validation, errorRequest, stack_resend_email));
-    }
     if (req.userData.user_activate == 1) throw(processError(message, invalid_request, stack_resend_email));
 
     // 2) create token
@@ -622,9 +620,10 @@ exports.verifikasiEmail = async (req, res, next) => {
     const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
     const [user] = await User.getUserByTokenAndExpired(hashedToken);
     if (user.length <= 0) throw(processError(message, invalid_token, stack_invalid_token));
-    if (Date.now() > new Date(user[0].user_token_expired).getTime()) throw(processError(message, user_token_expired, stack_user_token_expired));
+    if (user[0].user_activate == 1) throw(processError(message, user_activated, stack_user_activated));
+    if (Date.now() > new Date(user[0].user_token_expired).getTime()) throw(processError(message, invalid_token, stack_invalid_token));
     const [resultUpdate] = await User.activateUserAndDeleteToken(user[0].user_id);
-    if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_update_password_failed));
+    if (resultUpdate.affectedRows <= 0) throw(processError(message, invalid_request, stack_invalid_verifikasi));
     status = true;
   } catch (err) {
     error = err.error;

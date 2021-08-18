@@ -63,7 +63,8 @@ module.exports = {
   unique_user_data: 'User nama / nomor vin / nomor polisi sudah terdaftar',
   old_password_wrong: 'Password lama tidak sesuai',
   user_token_expired: 'Token sudah expired, silahkan coba forget password kembali',
-  invalid_token: 'Token reset password tidak valid / sudah expire',
+  invalid_token: 'Token tidak valid / sudah expire',
+  user_activated: 'Akun anda telah terverifikasi',
   // stack
   stack_invalid_data_register: 'Data register tidak valid',
   stack_invalid_data_update: 'Data update tidak valid',
@@ -106,5 +107,7 @@ module.exports = {
   stack_invalid_data_reset_password: 'Data reset password tidak valid',
   stack_forget_password: 'Gagal mengupdate token password',
   stack_user_token_expired: 'User token sudah expired',
-  stack_invalid_token: 'Token tidak valid'
+  stack_invalid_token: 'Token tidak valid',
+  stack_user_activated: 'Akun ini telah terverifikasi (user_activated = 1)',
+  stack_invalid_verifikasi: 'affected rows = 0'
 }
