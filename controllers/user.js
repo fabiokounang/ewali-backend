@@ -190,7 +190,8 @@ exports.loginUser = async (req, res, next) => {
       user_nama: user[0].user_nama || null,
       user_role: +user[0].user_role,
       user_status: +user[0].user_status,
-      user_activate: +user[0].user_activate
+      user_activate: +user[0].user_activate,
+      user_detail: user[0].user_detail ? JSON.parse(user[0].user_detail) : null
     }
     const cookieOptions = sendCookie(req);
     res.cookie('token', token, cookieOptions);
@@ -247,6 +248,16 @@ exports.submitForm = async (req, res, next) => {
 
     // 5) insert ke user_detail
     await User.insertOrUpdateDetailUser(req.userData.user_id, objDetail);
+    const [userData] = await User.getUserByKey('user_email', req.userData.user_email);
+    data = {
+      user_id: userData[0].user_id,
+      user_email: userData[0].user_email,
+      user_nama: userData[0].user_nama || null,
+      user_role: +userData[0].user_role,
+      user_status: +userData[0].user_status,
+      user_activate: +userData[0].user_activate,
+      user_detail: userData[0].user_detail ? JSON.parse(userData[0].user_detail) : null
+    }
     status = true;
   } catch (err) {
     error = err.error;
@@ -508,7 +519,8 @@ exports.getLogin = async (req, res, next) => {
       user_id: req.userData.user_id,
       user_email: req.userData.user_email,
       user_role: req.userData.user_role,
-      user_nama: req.userData.user_nama
+      user_nama: req.userData.user_nama,
+      user_detail: JSON.parse(req.userData.user_detail)
     }
     status = true;
   } catch (err) {

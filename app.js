@@ -23,7 +23,7 @@ app.use('/api/kota', kota);
 
 database.getConnection().then(() => {
   console.log('Database ewali connected');
-  // initializeDefaultUser(); // clear db, dan create admin default
+  initializeDefaultUser(); // clear db, dan create admin default
   app.listen(port, () => {
     console.log('Server ewali is listening to port ' + port);
   });

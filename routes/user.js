@@ -245,8 +245,8 @@ router.post('/submit_form/v1_0', checkAuth, checkOnlyUser, [
       if (!value) throw(informasi_wali_required);
       if (!Array.isArray(value)) throw(informasi_wali_format);
       if (value.length <= 0) throw(informasi_wali_required);
-      const enums = ['facebook', 'instagram', 'youtube', 'browsing via search engine', 'media cetak', 'teman / kenalan', 'dealer', 'lain-lain'];
-      const filteredData = value.filter(val => !enums.includes(val));
+      const enums = ['facebook', 'instagram', 'youtube', 'browsing via search engine', 'media cetak', 'teman / kenalan', 'dealer', 'lain - lain'];
+      const filteredData = value.filter(val => !enums.includes(val.toLowerCase()));
       if (filteredData.length > 0) throw(informasi_wali_format);
       return true;
     } catch (error) {
@@ -271,7 +271,7 @@ router.post('/submit_form/v1_0', checkAuth, checkOnlyUser, [
     .custom((value, {req}) => {
       try {
         if (!value) throw(emoney_required);
-        if (!['flash', 'e-toll', 'breeze'].includes(value)) throw(emoney_not_valid);
+        if (!['flazz', 'e-toll', 'breeze'].includes(value.toLowerCase())) throw(emoney_not_valid);
         return true;
       } catch (error) {
         throw(typeof(error) === 'string' ? error : general);
